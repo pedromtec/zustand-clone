@@ -1,17 +1,7 @@
-import { useEffect, useState } from "react"
-import { counterStore } from "./counter-store"
+import {  useCounterStore } from "./counter-store"
 
-export function CounterDisplay() {
-   const [count, setCount] = useState(counterStore.getState().count)
-
-   useEffect(() => {
-    const unsubscribe = counterStore.subscribe(() => {
-      setCount(counterStore.getState().count)
-    })
-
-    return unsubscribe
-   }, [])
-
+export function CounterDisplay() {  
+   const { count } = useCounterStore()
    return (
      <span>Counter: {count}</span>
    )

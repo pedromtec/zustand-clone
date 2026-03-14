@@ -1,14 +1,9 @@
-import { counterStore } from "./counter-store"
+import { useCounterStore } from "./counter-store"
 
 export function CounterActions() {
-   const enabled = true
 
-   const increment = () => {
-     counterStore.getState().increment()
-   }
-   const decrement = () => {
-     counterStore.getState().decrement()
-   }
+   const { increment, decrement } = useCounterStore()
+   const enabled = true
 
    return (
      <div className="counter-actions">

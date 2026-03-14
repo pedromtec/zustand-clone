@@ -1,13 +1,22 @@
 
 type Listener = () => void
 type SetState<T> = (newState: Partial<T> | ((state: T) => Partial<T>)) => void
-type CreateState<T> = (set: SetState<T>) => T
+type GetState<T> = () => T
+type Subscribe = (listener: Listener) => () => void
 
-export function createStore<T>(createState: CreateState<T>) {
+export type CreateState<T> = (set: SetState<T>) => T
+
+export type CreateStoreReturn<T> = {
+    getState: GetState<T>
+    setState: SetState<T>
+    subscribe: Subscribe
+}
+
+export function createStore<T>(createState: CreateState<T>): CreateStoreReturn<T> {
   let state: T
   let listeners: Set<Listener> = new Set()
 
-  const getState = () => {
+  const getState: GetState<T> = () => {
     return state
   }
 
@@ -20,7 +29,7 @@ export function createStore<T>(createState: CreateState<T>) {
     listeners.forEach(listener => listener())
   }
 
-  const subscribe = (listener: Listener) => {
+  const subscribe: Subscribe = (listener) => {
     listeners.add(listener)
 
     return () => {

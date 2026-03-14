@@ -1,4 +1,4 @@
-import { createStore } from "./my-zustand/vanilla";
+import { create } from "./my-zustand/react";
 
 type CounterState = {
     count: number
@@ -7,7 +7,7 @@ type CounterState = {
     decrement: () => void
 }
 
-export const counterStore = createStore<CounterState>((set) => {
+export const useCounterStore = create<CounterState>((set) => {
     return {
         count: 0,
         enabled: false,
