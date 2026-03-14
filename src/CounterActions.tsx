@@ -1,7 +1,15 @@
+import { counterStore } from "./counter-store"
+
 export function CounterActions() {
    const enabled = true
-   const increment = () => {}
-   const decrement = () => {}
+
+   const increment = () => {
+     counterStore.getState().increment()
+   }
+   const decrement = () => {
+     counterStore.getState().decrement()
+   }
+
    return (
      <div className="counter-actions">
        <button className="action-button" onClick={increment} disabled={!enabled}>
