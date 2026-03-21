@@ -5,6 +5,7 @@ type CounterState = {
     enabled: boolean
     increment: () => void
     decrement: () => void
+    toggleEnabled: () => void
 }
 
 export const useCounterStore = create<CounterState>((set) => {
@@ -16,6 +17,12 @@ export const useCounterStore = create<CounterState>((set) => {
         },
         decrement: () => {
             set((previousState) => ({ count: previousState.count-1}))
+        },
+        toggleEnabled() {
+            set((previousState) => ({
+            ...previousState,
+            enabled: !previousState.enabled
+            }))
         }
     }
 })

@@ -2,8 +2,9 @@ import { useCounterStore } from "./counter-store"
 
 export function CounterActions() {
 
-   const { increment, decrement } = useCounterStore()
-   const enabled = true
+   const increment = useCounterStore((state) => state.increment)
+   const decrement = useCounterStore((state) => state.decrement)
+   const enabled = useCounterStore((state) => state.enabled)
 
    return (
      <div className="counter-actions">

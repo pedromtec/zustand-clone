@@ -3,21 +3,33 @@ import {createStore, type CreateState, type CreateStoreReturn } from "./vanilla"
 
 type Store<T> = CreateStoreReturn<T>
 
-export function useStore<T>(store: Store<T>): T {
-    const [state, setState] = useState(store.getState())
+type Selector<T, U> = (state: T) => U
+
+export function useStore<T, U>(store: Store<T>, selector: Selector<T, U>): U {
+    const [state, setState] = useState<U>(() => selector(store.getState()))
 
     useEffect(() => {
         const unsubscribe = store.subscribe(() => {
-          setState(store.getState())
+          const newState = selector(store.getState())
+       
+          setState((previousState) => {
+            if(!Object.is(newState, previousState)) {
+              return newState
+            }
+            return previousState
+          })
         })
+        
         return unsubscribe
     }, [])
 
     return state
 }
 
-export function create<T>(createState: CreateState<T>): () => T {
+export function create<T>(createState: CreateState<T>): <U>(selector?: Selector<T, U>) => U {
    const store = createStore(createState)
 
-   return () => useStore(store)
+   return <U>(selector: Selector<T, U> = (state: T) => state as unknown as U) => {
+      return useStore(store, selector)
+   }
 }

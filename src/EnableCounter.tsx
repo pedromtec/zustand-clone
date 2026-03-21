@@ -1,16 +1,16 @@
-import { useState } from "react"
+import { useCounterStore } from "./counter-store"
 
 export function EnableCounter() {
-   const [enable, setEnable] = useState(false)
-   const toggleEnable = () => setEnable((prev) => !prev)
+   const enabled = useCounterStore((state) => state.enabled)
+   const toggleEnabled = useCounterStore((state) => state.toggleEnabled)
    
    return (
     <div className="enable-counter">
       <label htmlFor="enable-counter">Enable Counter</label>
       <input id="enable-counter" 
         type="checkbox" 
-        checked={enable} 
-        onChange={toggleEnable} 
+        checked={enabled} 
+        onChange={toggleEnabled} 
       />
     </div>
    )
