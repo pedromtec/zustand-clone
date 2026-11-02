@@ -1,0 +1,1515 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contador · props, context e store</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0c1222;
+        --line: #355089;
+        --text: #eef3ff;
+        --muted: #9aabc9;
+        --blue: #3b82f6;
+        --green: #34d399;
+        --amber: #fbbf24;
+        --rose: #fb7185;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Segoe UI", system-ui, sans-serif;
+      }
+
+      body {
+        overflow: hidden;
+      }
+
+      .deck {
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr) auto;
+      }
+
+      header,
+      .footer-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 1.4rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      header strong {
+        color: var(--text);
+      }
+
+      .progress {
+        height: 3px;
+        background: #24304d;
+      }
+
+      .progress span {
+        display: block;
+        height: 100%;
+        background: var(--blue);
+      }
+
+      .slide {
+        display: none;
+        height: 100%;
+        padding: 0.6rem 2rem 0.4rem;
+      }
+
+      .slide.active {
+        display: flex;
+        overflow: auto;
+      }
+
+      .frame {
+        width: min(1180px, 100%);
+        margin: auto;
+      }
+
+      h2 {
+        margin: 0 0 1rem;
+        font-size: clamp(1.7rem, 2.6vw, 2.3rem);
+        letter-spacing: -0.03em;
+        text-align: center;
+      }
+
+      .tree,
+      .tree ul {
+        display: flex;
+        justify-content: center;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .tree ul {
+        position: relative;
+        padding-top: 28px;
+      }
+
+      .tree li {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        padding: 28px 14px 0;
+      }
+
+      .tree > ul > li {
+        padding-top: 0;
+      }
+
+      .tree li::before,
+      .tree li::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 28px;
+        border-top: 2px solid var(--line);
+      }
+
+      .tree li::before {
+        right: 50%;
+      }
+
+      .tree li::after {
+        left: 50%;
+        border-left: 2px solid var(--line);
+      }
+
+      .tree > ul > li::before,
+      .tree > ul > li::after,
+      .tree li:only-child::after {
+        display: none;
+      }
+
+      .tree li:only-child::before {
+        left: 50%;
+        width: 0;
+        border: 0;
+        border-left: 2px solid var(--line);
+      }
+
+      .tree li:first-child::before,
+      .tree li:last-child::after {
+        border: 0;
+      }
+
+      .tree li:last-child::before {
+        border-right: 2px solid var(--line);
+      }
+
+      .tree li:first-child::after {
+        border-top: 2px solid var(--line);
+      }
+
+      .tree ul::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        height: 28px;
+        border-left: 2px solid var(--line);
+      }
+
+      .box {
+        min-width: 148px;
+        padding: 0.7rem 0.85rem 0.75rem;
+        border: 2px solid #31466f;
+        border-radius: 14px;
+        background: #151c31;
+        text-align: center;
+      }
+
+      .box b {
+        display: block;
+        font-size: 1rem;
+      }
+
+      .box small,
+      .ui {
+        display: block;
+        margin-top: 0.35rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .hold {
+        border-color: var(--blue);
+        background: #172554;
+      }
+
+      .pass {
+        border-color: #92620a;
+        background: #2a2112;
+      }
+
+      .use {
+        border-color: #0f766e;
+        background: #10261d;
+      }
+
+      .hot {
+        border-color: var(--rose);
+        background: #3f1d2a;
+        animation: hot-in 0.7s ease;
+      }
+
+      .tree.alert {
+        --line: #fb7185;
+      }
+
+      .hot .tags span {
+        background: #9f1239;
+        color: #ffe4e6;
+      }
+
+      @keyframes hot-in {
+        from {
+          filter: brightness(1.45);
+        }
+        to {
+          filter: brightness(1);
+        }
+      }
+
+      .calm {
+        border-color: #0f766e;
+        background: #10261d;
+        opacity: 0.55;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.3rem;
+        margin-top: 0.45rem;
+      }
+
+      .tags span,
+      .pill {
+        padding: 0.12rem 0.45rem;
+        border-radius: 999px;
+        background: #24304d;
+        color: #dbe6ff;
+        font-size: 0.75rem;
+      }
+
+      .pass .tags span {
+        background: #4a3410;
+        color: #fde68a;
+      }
+
+      .use .tags span,
+      .hold .tags span {
+        background: #1e3a8a;
+      }
+
+      .mini {
+        display: flex;
+        justify-content: center;
+        gap: 0.35rem;
+        margin-top: 0.45rem;
+      }
+
+      .mini i,
+      .check {
+        padding: 0.15rem 0.45rem;
+        border-radius: 6px;
+        background: #9ca3af;
+        color: white;
+        font-style: normal;
+        font-size: 0.75rem;
+      }
+
+      .subscribe {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) minmax(320px, 1fr);
+        gap: 4rem;
+        align-items: center;
+        min-height: 460px;
+      }
+
+      .arrow-layer {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+      }
+
+      .col-title {
+        margin: 0 0 0.8rem;
+        color: #93c5fd;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .store-fields {
+        display: grid;
+        gap: 0.45rem;
+        min-width: 220px;
+      }
+
+      .field {
+        padding: 0.45rem 0.7rem;
+        border-radius: 10px;
+        background: #1e3a8a;
+        text-align: center;
+      }
+
+      .field.dim {
+        opacity: 0.35;
+      }
+
+      .field.hot {
+        background: #9f1239;
+        animation: hot-in 0.7s ease;
+      }
+
+      .field.live {
+        box-shadow: inset 0 0 0 2px #60a5fa;
+      }
+
+      .outside {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0;
+      }
+
+      .wires {
+        display: grid;
+        gap: 0.8rem;
+      }
+
+      .wire {
+        display: flex;
+        align-items: center;
+        gap: 0;
+      }
+
+      .wire .box {
+        width: 220px;
+      }
+
+      .wire i {
+        width: 72px;
+        height: 2px;
+        flex: 0 0 72px;
+        background: #355089;
+        font-style: normal;
+      }
+
+      .wire.live i {
+        background: var(--rose);
+      }
+
+      .wire.quiet i {
+        background: #1e3a34;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: 1.15fr 0.85fr;
+        gap: 1.2rem;
+        align-items: center;
+      }
+
+      .codes {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.8rem;
+        align-items: start;
+      }
+
+      pre {
+        position: relative;
+        margin: 0;
+        padding: 2.15rem 0 0;
+        overflow: hidden;
+        border: 1px solid #3c3c3c;
+        border-radius: 12px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.28);
+        font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+        font-size: 0.98rem;
+        line-height: 1.5;
+      }
+
+      pre::before {
+        content: "";
+        position: absolute;
+        z-index: 1;
+        top: 0.78rem;
+        left: 0.85rem;
+        width: 0.62rem;
+        height: 0.62rem;
+        border-radius: 50%;
+        background: #ff5f57;
+        box-shadow:
+          0.95rem 0 0 #febc2e,
+          1.9rem 0 0 #28c840;
+      }
+
+      pre::after {
+        content: attr(data-file);
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        height: 2.15rem;
+        padding-left: 4.15rem;
+        border-bottom: 1px solid #333;
+        border-radius: 12px 12px 0 0;
+        background: #252526;
+        color: #cccccc;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 0.78rem;
+        line-height: 2.15rem;
+      }
+
+      pre code {
+        display: block;
+        padding: 0.9rem 1.15rem 1.05rem;
+        overflow: auto;
+        color: inherit;
+        font: inherit;
+      }
+
+      .codes pre {
+        font-size: 0.78rem;
+      }
+
+      code .k {
+        color: #c586c0;
+      }
+      code .f {
+        color: #dcdcaa;
+      }
+      code .c {
+        color: #4ec9b0;
+      }
+      code .h {
+        color: #569cd6;
+      }
+      code .v {
+        color: #9cdcfe;
+      }
+      code .s {
+        color: #ce9178;
+      }
+      code .n {
+        color: #b5cea8;
+      }
+      code .b {
+        color: #569cd6;
+      }
+
+      .points {
+        display: grid;
+        gap: 0.8rem;
+        width: min(720px, 100%);
+        margin: 0 auto;
+        padding: 0;
+        list-style: none;
+      }
+
+      .points li {
+        padding: 1.15rem 1.2rem;
+        border: 2px solid #92620a;
+        border-radius: 14px;
+        background: #2a2112;
+        font-size: 1.35rem;
+        text-align: center;
+      }
+
+      .trio {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+      }
+
+      .trio .box {
+        min-height: 140px;
+        display: grid;
+        place-items: center;
+        font-size: 1.35rem;
+      }
+
+      .pack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.4rem;
+      }
+
+      .legend {
+        display: flex;
+        justify-content: center;
+        gap: 1.1rem;
+        margin: -0.35rem 0 0.85rem;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      .legend i {
+        display: inline-block;
+        width: 0.7rem;
+        height: 0.7rem;
+        margin-right: 0.35rem;
+        border-radius: 3px;
+        vertical-align: -1px;
+      }
+
+      .swatch-hold {
+        background: var(--blue);
+      }
+
+      .swatch-pass {
+        background: var(--amber);
+      }
+
+      .swatch-use {
+        background: var(--green);
+      }
+
+      .app-screen {
+        width: min(980px, 100%);
+        margin: 0 auto;
+        padding: 0.55rem 0.7rem 0.7rem;
+        border: 2px solid var(--blue);
+        border-radius: 18px;
+        background: #121a30;
+      }
+
+      .drill-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.6rem;
+        margin-bottom: 0.45rem;
+        font-size: 0.95rem;
+      }
+
+      .drill-label b {
+        letter-spacing: -0.02em;
+      }
+
+      .drill-label span,
+      .quiet-label span {
+        padding: 0.12rem 0.45rem;
+        border-radius: 999px;
+        background: #4a3410;
+        color: #fde68a;
+        font-size: 0.75rem;
+      }
+
+      .app-screen > .drill-label span {
+        background: #1e3a8a;
+        color: #dbe6ff;
+      }
+
+      .shell {
+        padding: 0.5rem;
+        border: 2px solid #92620a;
+        border-radius: 14px;
+        background: #2a2112;
+      }
+
+      .screen-grid {
+        display: grid;
+        grid-template-columns: 230px 1fr;
+        gap: 0.55rem;
+      }
+
+      .pane {
+        padding: 0.5rem;
+        border: 2px solid #92620a;
+        border-radius: 12px;
+        background: #1c160e;
+      }
+
+      .pane.use {
+        border-color: #0f766e;
+        background: #10261d;
+      }
+
+      .pane.use .drill-label span {
+        background: #134e4a;
+        color: #d1fae5;
+      }
+
+      .pane.quiet {
+        border-color: #31466f;
+        background: #151c31;
+      }
+
+      .quiet-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.4rem;
+        color: var(--muted);
+        font-size: 0.85rem;
+      }
+
+      .quiet-label span {
+        background: #24304d;
+        color: #9aabc9;
+      }
+
+      .profile {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+      }
+
+      .avatar {
+        display: grid;
+        width: 42px;
+        height: 42px;
+        place-items: center;
+        border-radius: 50%;
+        background: var(--green);
+        color: #052e26;
+        font-weight: 700;
+      }
+
+      .profile b,
+      .quiet-label b,
+      .drill-label b {
+        display: block;
+      }
+
+      .profile small {
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+
+      .menu {
+        display: grid;
+        gap: 0.35rem;
+        margin-top: 0.5rem;
+      }
+
+      .menu i,
+      .post {
+        display: block;
+        border-radius: 8px;
+        background: #24304d;
+        color: #dbe6ff;
+        font-style: normal;
+      }
+
+      .menu i {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.85rem;
+      }
+
+      .posts {
+        display: grid;
+        gap: 0.4rem;
+      }
+
+      .post {
+        height: 52px;
+        background:
+          linear-gradient(#31466f, #31466f) 12px 14px / 42% 8px no-repeat,
+          linear-gradient(#24304d, #24304d) 12px 30px / 70% 8px no-repeat,
+          #1a243c;
+      }
+
+      .composer {
+        margin-top: 0.5rem;
+      }
+
+      .composer-input {
+        padding: 0.7rem 0.8rem;
+        border-radius: 10px;
+        background: #0f1628;
+        color: #dbe6ff;
+      }
+
+      .drill-caption {
+        margin: 0.8rem 0 0;
+        color: var(--muted);
+        font-size: 1.05rem;
+        text-align: center;
+      }
+
+      .nav {
+        display: flex;
+        gap: 0.45rem;
+      }
+
+      button.icon {
+        width: 2.2rem;
+        height: 2.2rem;
+        border: 1px solid #2c3a5c;
+        border-radius: 999px;
+        background: #151c31;
+        color: var(--text);
+        cursor: pointer;
+      }
+
+      .notes {
+        display: none;
+        margin: 0 1.4rem;
+        padding: 0.7rem 0.9rem;
+        border: 1px solid #2c3a5c;
+        border-radius: 12px;
+        background: #151c31;
+        color: var(--muted);
+      }
+
+      body.show-notes .notes {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck">
+      <header>
+        <strong>Recriando o zustand</strong>
+        <span class="count"></span>
+      </header>
+      <div class="progress"><span></span></div>
+      <main>
+        <section class="slide active" data-note="Mostre a árvore do contador. Três caixas, um pai. Ainda sem falar de estado.">
+          <div class="frame">
+            <h2>Contador</h2>
+            <div class="tree">
+              <ul>
+                <li>
+                  <div class="box"><b>App</b></div>
+                  <ul>
+                    <li>
+                      <div class="box">
+                        <b>CounterDisplay</b>
+                        <span class="ui">Counter: 0</span>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="box">
+                        <b>CounterActions</b>
+                        <span class="mini"><i>Increment</i><i>Decrement</i></span>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="box">
+                        <b>EnableCounter</b>
+                        <span class="ui">Enable Counter ☐</span>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-note="O estado sobe para o App. Cada linha leva só o que a caixa de baixo usa.">
+          <div class="frame">
+            <h2>Estado no pai</h2>
+            <div class="tree">
+              <ul>
+                <li>
+                  <div class="box hold">
+                    <b>App</b>
+                    <div class="tags">
+                      <span>count: 0</span>
+                      <span>enabled: false</span>
+                    </div>
+                  </div>
+                  <ul>
+                    <li>
+                      <div class="box use">
+                        <b>CounterDisplay</b>
+                        <div class="tags"><span>count</span></div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="box use">
+                        <b>CounterActions</b>
+                        <div class="tags">
+                          <span>enabled</span>
+                          <span>onIncrement</span>
+                          <span>onDecrement</span>
+                        </div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="box use">
+                        <b>EnableCounter</b>
+                        <div class="tags">
+                          <span>enabled</span>
+                          <span>onToggle</span>
+                        </div>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-note="Leia o código do pai. O estado fica aqui e desce por props.">
+          <div class="frame">
+            <h2>Pai</h2>
+            <pre data-file="App.tsx"><code><span class="k">function</span> <span class="f">App</span>() {
+  <span class="k">const</span> [<span class="v">count</span>, <span class="v">setCount</span>] = <span class="f">useState</span>(<span class="n">0</span>);
+  <span class="k">const</span> [<span class="v">enabled</span>, <span class="v">setEnabled</span>] = <span class="f">useState</span>(<span class="b">false</span>);
+
+  <span class="k">return</span> (
+    &lt;&gt;
+      &lt;<span class="c">CounterDisplay</span> <span class="v">count</span>={<span class="v">count</span>} /&gt;
+      &lt;<span class="c">CounterActions</span>
+        <span class="v">enabled</span>={<span class="v">enabled</span>}
+        <span class="v">onIncrement</span>&#123;() =&gt; <span class="f">setCount</span>((<span class="v">n</span>) =&gt; <span class="v">n</span> + <span class="n">1</span>)}
+        <span class="v">onDecrement</span>&#123;() =&gt; <span class="f">setCount</span>((<span class="v">n</span>) =&gt; <span class="v">n</span> - <span class="n">1</span>)}
+      /&gt;
+      &lt;<span class="c">EnableCounter</span>
+        <span class="v">enabled</span>={<span class="v">enabled</span>}
+        <span class="v">onToggle</span>&#123;() =&gt; <span class="f">setEnabled</span>((<span class="v">value</span>) =&gt; !<span class="v">value</span>)}
+      /&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+          </div>
+        </section>
+
+        <section class="slide" data-note="Cada filho declara só a própria parte.">
+          <div class="frame">
+            <h2>Filhos</h2>
+            <div class="codes">
+              <pre data-file="CounterDisplay.tsx"><code><span class="k">function</span> <span class="f">CounterDisplay</span>({
+  <span class="v">count</span>,
+}) {
+  <span class="k">return</span> (
+    &lt;<span class="h">span</span>&gt;Counter: {<span class="v">count</span>}&lt;/<span class="h">span</span>&gt;
+  );
+}</code></pre>
+              <pre data-file="CounterActions.tsx"><code><span class="k">function</span> <span class="f">CounterActions</span>({
+  <span class="v">enabled</span>,
+  <span class="v">onIncrement</span>,
+  <span class="v">onDecrement</span>,
+}) {
+  <span class="k">return</span> (
+    &lt;&gt;
+      &lt;<span class="h">button</span>
+        <span class="v">onClick</span>={<span class="v">onIncrement</span>}
+        <span class="v">disabled</span>={!<span class="v">enabled</span>}
+      &gt;
+        Increment
+      &lt;/<span class="h">button</span>&gt;
+      &lt;<span class="h">button</span>
+        <span class="v">onClick</span>={<span class="v">onDecrement</span>}
+        <span class="v">disabled</span>={!<span class="v">enabled</span>}
+      &gt;
+        Decrement
+      &lt;/<span class="h">button</span>&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+              <pre data-file="EnableCounter.tsx"><code><span class="k">function</span> <span class="f">EnableCounter</span>({
+  <span class="v">enabled</span>,
+  <span class="v">onToggle</span>,
+}) {
+  <span class="k">return</span> (
+    &lt;<span class="h">label</span>&gt;
+      Enable Counter
+      &lt;<span class="h">input</span>
+        <span class="v">type</span>=<span class="s">"checkbox"</span>
+        <span class="v">checked</span>={<span class="v">enabled</span>}
+        <span class="v">onChange</span>={<span class="v">onToggle</span>}
+      /&gt;
+    &lt;/<span class="h">label</span>&gt;
+  );
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-note="Troque o contador por um feed. O usuário nasce no App. Shell, Sidebar e Feed não mostram o nome: só empurram a prop. Quem usa de verdade é o Profile e o Composer. Menu e Posts nem precisam dela.">
+          <div class="frame">
+            <h2>Prop drilling</h2>
+            <div class="legend">
+              <span><i class="swatch-hold"></i>guarda</span>
+              <span><i class="swatch-pass"></i>só repassa</span>
+              <span><i class="swatch-use"></i>usa</span>
+            </div>
+            <div class="app-screen">
+              <div class="drill-label">
+                <b>App</b>
+                <span>user</span>
+              </div>
+              <div class="shell">
+                <div class="drill-label">
+                  <b>Shell</b>
+                  <span>user</span>
+                </div>
+                <div class="screen-grid">
+                  <div class="pane">
+                    <div class="drill-label">
+                      <b>Sidebar</b>
+                      <span>user</span>
+                    </div>
+                    <div class="pane use">
+                      <div class="drill-label">
+                        <b>Profile</b>
+                        <span>user.name</span>
+                      </div>
+                      <div class="profile">
+                        <div class="avatar">A</div>
+                        <div>
+                          <b>Ana</b>
+                          <small>user.avatar</small>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="pane quiet menu">
+                      <div class="quiet-label">
+                        <b>Menu</b>
+                        <span>sem user</span>
+                      </div>
+                      <i>Início</i>
+                      <i>Explorar</i>
+                      <i>Salvos</i>
+                    </div>
+                  </div>
+                  <div class="pane">
+                    <div class="drill-label">
+                      <b>Feed</b>
+                      <span>user</span>
+                    </div>
+                    <div class="pane quiet">
+                      <div class="quiet-label">
+                        <b>Posts</b>
+                        <span>sem user</span>
+                      </div>
+                      <div class="posts">
+                        <i class="post"></i>
+                        <i class="post"></i>
+                      </div>
+                    </div>
+                    <div class="pane use composer">
+                      <div class="drill-label">
+                        <b>Composer</b>
+                        <span>user.name</span>
+                      </div>
+                      <div class="composer-input">Comentar como Ana</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="drill-caption">Shell, Sidebar e Feed não mostram o usuário. A prop só existe para chegar no Profile e no Composer.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-note="Volte ao mesmo contador. O Provider fica no lugar do App e as três folhas leem o contexto.">
+          <div class="frame">
+            <h2>Context API</h2>
+            <div class="tree">
+              <ul>
+                <li>
+                  <div class="box hold">
+                    <b>App</b>
+                    <div class="tags"><span>Provider</span></div>
+                  </div>
+                  <ul>
+                    <li>
+                      <div class="box use">
+                        <b>CounterDisplay</b>
+                        <div class="tags"><span>useContext</span></div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="box use">
+                        <b>CounterActions</b>
+                        <div class="tags"><span>useContext</span></div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="box use">
+                        <b>EnableCounter</b>
+                        <div class="tags"><span>useContext</span></div>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-note="O Provider continua dono do useState. O value junta tudo num objeto só.">
+          <div class="frame">
+            <h2>Provider</h2>
+            <pre data-file="CounterProvider.tsx"><code><span class="k">function</span> <span class="f">CounterProvider</span>({ <span class="v">children</span> }) {
+  <span class="k">const</span> [<span class="v">count</span>, <span class="v">setCount</span>] = <span class="f">useState</span>(<span class="n">0</span>);
+  <span class="k">const</span> [<span class="v">enabled</span>, <span class="v">setEnabled</span>] = <span class="f">useState</span>(<span class="b">false</span>);
+
+  <span class="k">const</span> <span class="v">value</span> = {
+    <span class="v">count</span>,
+    <span class="v">enabled</span>,
+    <span class="v">increment</span>: () =&gt; <span class="f">setCount</span>((<span class="v">n</span>) =&gt; <span class="v">n</span> + <span class="n">1</span>),
+    <span class="v">decrement</span>: () =&gt; <span class="f">setCount</span>((<span class="v">n</span>) =&gt; <span class="v">n</span> - <span class="n">1</span>),
+    <span class="v">toggleEnabled</span>: () =&gt; <span class="f">setEnabled</span>((<span class="v">value</span>) =&gt; !<span class="v">value</span>),
+  };
+
+  <span class="k">return</span> (
+    &lt;<span class="c">CounterContext.Provider</span> <span class="v">value</span>={<span class="v">value</span>}&gt;
+      {<span class="v">children</span>}
+    &lt;/<span class="c">CounterContext.Provider</span>&gt;
+  );
+}</code></pre>
+          </div>
+        </section>
+
+        <section class="slide" data-note="As mesmas três folhas buscam o pacote no contexto, sem props.">
+          <div class="frame">
+            <h2>Folhas</h2>
+            <div class="codes">
+              <pre data-file="CounterDisplay.tsx"><code><span class="k">function</span> <span class="f">CounterDisplay</span>() {
+  <span class="k">const</span> { <span class="v">count</span> } =
+    <span class="f">useContext</span>(<span class="c">CounterContext</span>);
+
+  <span class="k">return</span> &lt;<span class="h">span</span>&gt;{<span class="v">count</span>}&lt;/<span class="h">span</span>&gt;;
+}</code></pre>
+              <pre data-file="CounterActions.tsx"><code><span class="k">function</span> <span class="f">CounterActions</span>() {
+  <span class="k">const</span> { <span class="v">enabled</span>, <span class="v">increment</span>, <span class="v">decrement</span> } =
+    <span class="f">useContext</span>(<span class="c">CounterContext</span>);
+
+  <span class="k">return</span> (
+    &lt;&gt;
+      &lt;<span class="h">button</span>
+        <span class="v">onClick</span>={<span class="v">increment</span>}
+        <span class="v">disabled</span>={!<span class="v">enabled</span>}
+      &gt;
+        Increment
+      &lt;/<span class="h">button</span>&gt;
+      &lt;<span class="h">button</span>
+        <span class="v">onClick</span>={<span class="v">decrement</span>}
+        <span class="v">disabled</span>={!<span class="v">enabled</span>}
+      &gt;
+        Decrement
+      &lt;/<span class="h">button</span>&gt;
+    &lt;/&gt;
+  );
+}</code></pre>
+              <pre data-file="EnableCounter.tsx"><code><span class="k">function</span> <span class="f">EnableCounter</span>() {
+  <span class="k">const</span> { <span class="v">enabled</span>, <span class="v">toggleEnabled</span> } =
+    <span class="f">useContext</span>(<span class="c">CounterContext</span>);
+
+  <span class="k">return</span> (
+    &lt;<span class="h">label</span>&gt;
+      Enable Counter
+      &lt;<span class="h">input</span>
+        <span class="v">type</span>=<span class="s">"checkbox"</span>
+        <span class="v">checked</span>={<span class="v">enabled</span>}
+        <span class="v">onChange</span>={<span class="v">toggleEnabled</span>}
+      /&gt;
+    &lt;/<span class="h">label</span>&gt;
+  );
+}</code></pre>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide" data-note="Este é o problema. count mudou, mas o value é um objeto só. Actions e Enable não usam count e mesmo assim ficam vermelhos.">
+          <div class="frame">
+            <h2>count 0 → 1</h2>
+            <div class="tree alert">
+              <ul>
+                <li>
+                  <div class="box hot">
+                    <b>Provider</b>
+                    <small>value</small>
+                    <div class="tags">
+                      <span>count</span>
+                      <span>enabled</span>
+                      <span>increment</span>
+                      <span>decrement</span>
+                      <span>toggleEnabled</span>
+                    </div>
+                  </div>
+                  <ul>
+                    <li>
+                      <div class="box hot">
+                        <b>CounterDisplay</b>
+                        <div class="tags"><span>usa count</span></div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="box hot">
+                        <b>CounterActions</b>
+                        <div class="tags"><span>não usa count</span></div>
+                      </div>
+                    </li>
+                    <li>
+                      <div class="box hot">
+                        <b>EnableCounter</b>
+                        <div class="tags"><span>não usa count</span></div>
+                      </div>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+            <p class="drill-caption">O value inteiro mudou. As três folhas renderizam, mesmo quem não usa count.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-note="A store fica fora da árvore. Ainda sem setas: ninguém está inscrito.">
+          <div class="frame">
+            <h2>Store</h2>
+            <div class="subscribe" data-marker="bare">
+              <svg class="arrow-layer"></svg>
+              <div>
+                <p class="col-title">React</p>
+                <div class="tree">
+                  <ul>
+                    <li>
+                      <div class="box"><b>App</b></div>
+                      <ul>
+                        <li>
+                          <div class="box" data-node="display"><b>CounterDisplay</b></div>
+                        </li>
+                        <li>
+                          <div class="box" data-node="actions"><b>CounterActions</b></div>
+                        </li>
+                        <li>
+                          <div class="box" data-node="enable"><b>EnableCounter</b></div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <p class="col-title">Store</p>
+                <div class="box hold store-fields">
+                  <div class="field" data-node="count">count</div>
+                  <div class="field" data-node="increment">increment</div>
+                  <div class="field" data-node="decrement">decrement</div>
+                  <div class="field" data-node="enabled">enabled</div>
+                  <div class="field" data-node="toggle">toggleEnabled</div>
+                </div>
+              </div>
+            </div>
+            <p class="drill-caption">A store fica fora da árvore. Ainda sem inscrições.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-note="Desenhe a primeira aresta. CounterDisplay observa só count.">
+          <div class="frame">
+            <h2>CounterDisplay</h2>
+            <div class="subscribe" data-marker="display" data-draw="display">
+              <svg class="arrow-layer"></svg>
+              <div>
+                <p class="col-title">React</p>
+                <div class="tree">
+                  <ul>
+                    <li>
+                      <div class="box"><b>App</b></div>
+                      <ul>
+                        <li>
+                          <div class="box use" data-node="display" data-to="count"><b>CounterDisplay</b></div>
+                        </li>
+                        <li>
+                          <div class="box" data-node="actions"><b>CounterActions</b></div>
+                        </li>
+                        <li>
+                          <div class="box" data-node="enable"><b>EnableCounter</b></div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <p class="col-title">Store</p>
+                <div class="box hold store-fields">
+                  <div class="field live" data-node="count">count</div>
+                  <div class="field" data-node="increment">increment</div>
+                  <div class="field" data-node="decrement">decrement</div>
+                  <div class="field" data-node="enabled">enabled</div>
+                  <div class="field" data-node="toggle">toggleEnabled</div>
+                </div>
+              </div>
+            </div>
+            <p class="drill-caption">CounterDisplay se inscreve em count.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-note="Agora as arestas do CounterActions: enabled, increment e decrement. A de count continua.">
+          <div class="frame">
+            <h2>CounterActions</h2>
+            <div class="subscribe" data-marker="actions" data-draw="actions">
+              <svg class="arrow-layer"></svg>
+              <div>
+                <p class="col-title">React</p>
+                <div class="tree">
+                  <ul>
+                    <li>
+                      <div class="box"><b>App</b></div>
+                      <ul>
+                        <li>
+                          <div class="box use" data-node="display" data-to="count"><b>CounterDisplay</b></div>
+                        </li>
+                        <li>
+                          <div class="box use" data-node="actions" data-to="increment decrement enabled"><b>CounterActions</b></div>
+                        </li>
+                        <li>
+                          <div class="box" data-node="enable"><b>EnableCounter</b></div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <p class="col-title">Store</p>
+                <div class="box hold store-fields">
+                  <div class="field" data-node="count">count</div>
+                  <div class="field live" data-node="increment">increment</div>
+                  <div class="field live" data-node="decrement">decrement</div>
+                  <div class="field live" data-node="enabled">enabled</div>
+                  <div class="field" data-node="toggle">toggleEnabled</div>
+                </div>
+              </div>
+            </div>
+            <p class="drill-caption">CounterActions se inscreve em increment, decrement e enabled.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-note="Feche as inscrições. EnableCounter observa enabled e toggleEnabled.">
+          <div class="frame">
+            <h2>EnableCounter</h2>
+            <div class="subscribe" data-marker="enable" data-draw="enable">
+              <svg class="arrow-layer"></svg>
+              <div>
+                <p class="col-title">React</p>
+                <div class="tree">
+                  <ul>
+                    <li>
+                      <div class="box"><b>App</b></div>
+                      <ul>
+                        <li>
+                          <div class="box use" data-node="display" data-to="count"><b>CounterDisplay</b></div>
+                        </li>
+                        <li>
+                          <div class="box use" data-node="actions" data-to="increment decrement enabled"><b>CounterActions</b></div>
+                        </li>
+                        <li>
+                          <div class="box use" data-node="enable" data-to="enabled toggle"><b>EnableCounter</b></div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <p class="col-title">Store</p>
+                <div class="box hold store-fields">
+                  <div class="field" data-node="count">count</div>
+                  <div class="field" data-node="increment">increment</div>
+                  <div class="field" data-node="decrement">decrement</div>
+                  <div class="field live" data-node="enabled">enabled</div>
+                  <div class="field live" data-node="toggle">toggleEnabled</div>
+                </div>
+              </div>
+            </div>
+            <p class="drill-caption">EnableCounter se inscreve em enabled e toggleEnabled.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-note="count mudou. Só a aresta do CounterDisplay acende. Actions e Enable ficam quietos.">
+          <div class="frame">
+            <h2>count 0 → 1</h2>
+            <div class="subscribe" data-marker="count" data-focus="count">
+              <svg class="arrow-layer"></svg>
+              <div>
+                <p class="col-title">React</p>
+                <div class="tree">
+                  <ul>
+                    <li>
+                      <div class="box"><b>App</b></div>
+                      <ul>
+                        <li>
+                          <div class="box hot" data-node="display" data-to="count"><b>CounterDisplay</b></div>
+                        </li>
+                        <li>
+                          <div class="box calm" data-node="actions" data-to="increment decrement enabled"><b>CounterActions</b></div>
+                        </li>
+                        <li>
+                          <div class="box calm" data-node="enable" data-to="enabled toggle"><b>EnableCounter</b></div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <p class="col-title">Store</p>
+                <div class="box hold store-fields">
+                  <div class="field hot" data-node="count">count</div>
+                  <div class="field dim" data-node="increment">increment</div>
+                  <div class="field dim" data-node="decrement">decrement</div>
+                  <div class="field dim" data-node="enabled">enabled</div>
+                  <div class="field dim" data-node="toggle">toggleEnabled</div>
+                </div>
+              </div>
+            </div>
+            <p class="drill-caption">Só quem observa count renderiza.</p>
+          </div>
+        </section>
+
+        <section class="slide" data-note="enabled mudou. Acendem CounterActions e EnableCounter, os dois observam enabled. CounterDisplay não.">
+          <div class="frame">
+            <h2>enabled</h2>
+            <div class="subscribe" data-marker="enabled" data-focus="enabled">
+              <svg class="arrow-layer"></svg>
+              <div>
+                <p class="col-title">React</p>
+                <div class="tree">
+                  <ul>
+                    <li>
+                      <div class="box"><b>App</b></div>
+                      <ul>
+                        <li>
+                          <div class="box calm" data-node="display" data-to="count"><b>CounterDisplay</b></div>
+                        </li>
+                        <li>
+                          <div class="box hot" data-node="actions" data-to="increment decrement enabled"><b>CounterActions</b></div>
+                        </li>
+                        <li>
+                          <div class="box hot" data-node="enable" data-to="enabled toggle"><b>EnableCounter</b></div>
+                        </li>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div>
+                <p class="col-title">Store</p>
+                <div class="box hold store-fields">
+                  <div class="field dim" data-node="count">count</div>
+                  <div class="field dim" data-node="increment">increment</div>
+                  <div class="field dim" data-node="decrement">decrement</div>
+                  <div class="field hot" data-node="enabled">enabled</div>
+                  <div class="field dim" data-node="toggle">toggleEnabled</div>
+                </div>
+              </div>
+            </div>
+            <p class="drill-caption">enabled mudou. Actions e Enable renderizam. Display não.</p>
+          </div>
+        </section>
+      </main>
+      <footer>
+        <p class="notes"></p>
+        <div class="footer-bar">
+          <span>← → · N notas</span>
+          <div class="nav">
+            <button class="icon" type="button" data-dir="-1" aria-label="Slide anterior">←</button>
+            <button class="icon" type="button" data-dir="1" aria-label="Próximo slide">→</button>
+          </div>
+        </div>
+      </footer>
+    </div>
+    <script>
+      const slides = [...document.querySelectorAll(".slide")];
+      const notes = document.querySelector(".notes");
+      const count = document.querySelector(".count");
+      const bar = document.querySelector(".progress span");
+      const initialSlide = Number(new URLSearchParams(location.search).get("slide"));
+      let index =
+        Number.isInteger(initialSlide) && initialSlide >= 1 && initialSlide <= slides.length
+          ? initialSlide - 1
+          : 0;
+
+      function drawSubscriptions() {
+        document.querySelectorAll(".subscribe").forEach((root) => {
+          const svg = root.querySelector(".arrow-layer");
+          const bounds = root.getBoundingClientRect();
+          if (!svg || bounds.width === 0) return;
+
+          const marker = root.dataset.marker || "sub";
+          const focus = root.dataset.focus || "";
+          const drawFrom = root.dataset.draw || "";
+          svg.setAttribute("viewBox", `0 0 ${bounds.width} ${bounds.height}`);
+          svg.setAttribute("width", bounds.width);
+          svg.setAttribute("height", bounds.height);
+          svg.innerHTML = `
+            <defs>
+              <marker id="mk-${marker}-hot" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                <path d="M0,0 L7,3 L0,6" fill="#fb7185"></path>
+              </marker>
+              <marker id="mk-${marker}-sub" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                <path d="M0,0 L7,3 L0,6" fill="#60a5fa"></path>
+              </marker>
+              <marker id="mk-${marker}-dim" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+                <path d="M0,0 L7,3 L0,6" fill="#334155"></path>
+              </marker>
+            </defs>
+          `;
+
+          const pairs = [];
+          root.querySelectorAll("[data-to]").forEach((from) => {
+            from.dataset.to.split(/\s+/).filter(Boolean).forEach((toId) => {
+              pairs.push({ from, toId });
+            });
+          });
+
+          const byTarget = new Map();
+          pairs.forEach((pair) => {
+            const list = byTarget.get(pair.toId) || [];
+            list.push(pair);
+            byTarget.set(pair.toId, list);
+          });
+
+          byTarget.forEach((list, toId) => {
+            const to = root.querySelector(`[data-node="${toId}"]`);
+            if (!to) return;
+            const toBox = to.getBoundingClientRect();
+            list.forEach((pair, index) => {
+              const fromBox = pair.from.getBoundingClientRect();
+              const x1 = fromBox.right - bounds.left;
+              const y1 = fromBox.top + fromBox.height / 2 - bounds.top;
+              const x2 = toBox.left - bounds.left - 8;
+              const spread = (index - (list.length - 1) / 2) * 14;
+              const y2 = toBox.top + toBox.height / 2 - bounds.top + spread;
+              const mid = (x1 + x2) / 2;
+              const kind = !focus || toId === focus ? (focus ? "hot" : "sub") : "dim";
+              const color = kind === "hot" ? "#fb7185" : kind === "dim" ? "#334155" : "#60a5fa";
+              const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+              path.setAttribute("d", `M ${x1} ${y1} C ${mid} ${y1}, ${mid} ${y2}, ${x2} ${y2}`);
+              path.setAttribute("fill", "none");
+              path.setAttribute("stroke", color);
+              path.setAttribute("stroke-width", "2");
+              path.setAttribute("marker-end", `url(#mk-${marker}-${kind})`);
+              svg.appendChild(path);
+
+              if (drawFrom === "*" || drawFrom === pair.from.dataset.node) {
+                const length = path.getTotalLength();
+                path.style.strokeDasharray = `${length}`;
+                path.style.strokeDashoffset = `${length}`;
+                path.animate([{ strokeDashoffset: length }, { strokeDashoffset: 0 }], {
+                  duration: 550,
+                  delay: index * 90,
+                  easing: "ease-out",
+                  fill: "forwards",
+                });
+              }
+            });
+          });
+        });
+      }
+
+      function render() {
+        slides.forEach((slide, slideIndex) => {
+          slide.classList.toggle("active", slideIndex === index);
+        });
+        count.textContent = `${index + 1} / ${slides.length}`;
+        bar.style.width = `${((index + 1) / slides.length) * 100}%`;
+        notes.textContent = slides[index].dataset.note || "";
+        requestAnimationFrame(drawSubscriptions);
+      }
+
+      function go(nextIndex) {
+        index = Math.min(slides.length - 1, Math.max(0, nextIndex));
+        render();
+      }
+
+      document.addEventListener("keydown", (event) => {
+        if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+          event.preventDefault();
+          go(index + 1);
+        }
+        if (event.key === "ArrowLeft" || event.key === "PageUp") {
+          event.preventDefault();
+          go(index - 1);
+        }
+        if (event.key === "Home") go(0);
+        if (event.key === "End") go(slides.length - 1);
+        if (event.key === "n" || event.key === "N") {
+          document.body.classList.toggle("show-notes");
+        }
+      });
+
+      document.querySelectorAll("[data-dir]").forEach((button) => {
+        button.addEventListener("click", () => go(index + Number(button.dataset.dir)));
+      });
+
+      window.addEventListener("resize", drawSubscriptions);
+
+      render();
+    </script>
+  </body>
+</html>
