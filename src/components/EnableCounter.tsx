@@ -1,9 +1,9 @@
-import { useCounterStore } from '../stores/counter-store';
+type EnableCounterProps = {
+  enabled: boolean;
+  onToggle: () => void;
+};
 
-export function EnableCounter() {
-  const enabled = useCounterStore((state) => state.enabled);
-  const toggleEnabled = useCounterStore((state) => state.toggleEnabled);
-
+export function EnableCounter({ enabled, onToggle }: EnableCounterProps) {
   return (
     <div className="enable-counter">
       <label htmlFor="enable-counter">Enable Counter</label>
@@ -11,7 +11,7 @@ export function EnableCounter() {
         id="enable-counter"
         type="checkbox"
         checked={enabled}
-        onChange={toggleEnabled}
+        onChange={onToggle}
       />
     </div>
   );

@@ -1,11 +1,8 @@
 # zustand-clone
 
-Base da playlist **Recriando o zustand**.
+Base da playlist **Recriando o zustand**. A branch `aula-1` é o ponto de partida: o contador em React, ainda sem store.
 
-O app é um contador em React. Os componentes ficam em `src/components` e a store do contador em `src/stores`. A implementação, no estilo do [Zustand](https://github.com/pmndrs/zustand), fica em `src/lib/zustand`:
-
-- `vanilla.ts` guarda o estado e avisa quem está inscrito
-- `react.ts` conecta essa store aos componentes
+Os componentes ficam em `src/components`. O estado mora no `App`.
 
 ## Rodar
 
