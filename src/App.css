@@ -50,8 +50,7 @@
   background-color: #1d4ed8;
 }
 
-/* active (quando clica) */
-.action-button:active {
+.action-button:active:not(:disabled) {
   transform: scale(0.98);
 }
 
