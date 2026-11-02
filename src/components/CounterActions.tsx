@@ -1,30 +1,10 @@
-type CounterActionsProps = {
-  enabled: boolean;
-  onIncrement: () => void;
-  onDecrement: () => void;
-};
-
-export function CounterActions({
-  enabled,
-  onIncrement,
-  onDecrement,
-}: CounterActionsProps) {
+export function CounterActions() {
   return (
     <div className="counter-actions">
-      <button
-        type="button"
-        className="action-button"
-        onClick={onIncrement}
-        disabled={!enabled}
-      >
+      <button type="button" className="action-button">
         Increment
       </button>
-      <button
-        type="button"
-        className="action-button"
-        onClick={onDecrement}
-        disabled={!enabled}
-      >
+      <button type="button" className="action-button">
         Decrement
       </button>
     </div>
