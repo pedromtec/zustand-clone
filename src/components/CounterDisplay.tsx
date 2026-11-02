@@ -1,7 +1,3 @@
-type CounterDisplayProps = {
-  count: number;
-};
-
-export function CounterDisplay({ count }: CounterDisplayProps) {
-  return <span>Counter: {count}</span>;
+export function CounterDisplay() {
+  return <span>Counter: 0</span>;
 }
