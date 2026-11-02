@@ -3,13 +3,22 @@ import {
   type CreateState,
   type CreateStoreReturn,
   createStore,
+  type StoreState,
 } from './vanilla';
 
-type Store<T> = CreateStoreReturn<T>;
+type Store<T extends StoreState> = CreateStoreReturn<T>;
 
 type Selector<T, U> = (state: T) => U;
 
-export function useStore<T, U>(store: Store<T>, selector: Selector<T, U>): U {
+type UseBoundStore<T> = {
+  (): T;
+  <U>(selector: Selector<T, U>): U;
+};
+
+export function useStore<T extends StoreState, U>(
+  store: Store<T>,
+  selector: Selector<T, U>,
+): U {
   const [state, setState] = useState<U>(() => selector(store.getState()));
 
   useEffect(() => {
@@ -30,14 +39,18 @@ export function useStore<T, U>(store: Store<T>, selector: Selector<T, U>): U {
   return state;
 }
 
-export function create<T>(
+export function create<T extends StoreState>(
   createState: CreateState<T>,
-): <U>(selector?: Selector<T, U>) => U {
+): UseBoundStore<T> {
   const store = createStore(createState);
+  const selectState: Selector<T, T> = (state) => state;
 
-  return <U>(
-    selector: Selector<T, U> = (state: T) => state as unknown as U,
-  ) => {
-    return useStore(store, selector);
-  };
+  function useBoundStore(): T;
+  function useBoundStore<U>(selector: Selector<T, U>): U;
+  function useBoundStore<U>(selector?: Selector<T, U>): T | U {
+    const select: Selector<T, T | U> = selector ?? selectState;
+    return useStore(store, select);
+  }
+
+  return useBoundStore;
 }
