@@ -1,4 +1,4 @@
-import { useCounterStore } from './counter-store';
+import { useCounterStore } from '../stores/counter-store';
 
 export function CounterActions() {
   const increment = useCounterStore((state) => state.increment);

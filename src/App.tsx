@@ -1,6 +1,6 @@
-import { CounterActions } from './CounterActions';
-import { CounterDisplay } from './CounterDisplay';
-import { EnableCounter } from './EnableCounter';
+import { CounterActions } from './components/CounterActions';
+import { CounterDisplay } from './components/CounterDisplay';
+import { EnableCounter } from './components/EnableCounter';
 import './App.css';
 
 export function App() {

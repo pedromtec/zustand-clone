@@ -1,4 +1,4 @@
-import { useCounterStore } from './counter-store';
+import { useCounterStore } from '../stores/counter-store';
 
 export function EnableCounter() {
   const enabled = useCounterStore((state) => state.enabled);
