@@ -1,4 +1,4 @@
-import { create } from './my-zustand/react';
+import { create } from './zustand/react';
 
 type CounterState = {
   count: number;
