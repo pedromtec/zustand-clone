@@ -1,6 +1,7 @@
-import { useCounterStore } from '../stores/counter-store';
+type CounterDisplayProps = {
+  count: number;
+};
 
-export function CounterDisplay() {
-  const count = useCounterStore((state) => state.count);
+export function CounterDisplay({ count }: CounterDisplayProps) {
   return <span>Counter: {count}</span>;
 }

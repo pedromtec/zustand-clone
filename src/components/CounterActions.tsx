@@ -1,16 +1,20 @@
-import { useCounterStore } from '../stores/counter-store';
+type CounterActionsProps = {
+  enabled: boolean;
+  onIncrement: () => void;
+  onDecrement: () => void;
+};
 
-export function CounterActions() {
-  const increment = useCounterStore((state) => state.increment);
-  const decrement = useCounterStore((state) => state.decrement);
-  const enabled = useCounterStore((state) => state.enabled);
-
+export function CounterActions({
+  enabled,
+  onIncrement,
+  onDecrement,
+}: CounterActionsProps) {
   return (
     <div className="counter-actions">
       <button
         type="button"
         className="action-button"
-        onClick={increment}
+        onClick={onIncrement}
         disabled={!enabled}
       >
         Increment
@@ -18,7 +22,7 @@ export function CounterActions() {
       <button
         type="button"
         className="action-button"
-        onClick={decrement}
+        onClick={onDecrement}
         disabled={!enabled}
       >
         Decrement
