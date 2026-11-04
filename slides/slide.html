@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Contador · props, context e store</title>
+    <title>Gerenciamento de estado no react</title>
     <style>
       :root {
         color-scheme: dark;
@@ -37,11 +37,10 @@
       .deck {
         height: 100%;
         display: grid;
-        grid-template-rows: auto auto minmax(0, 1fr) auto;
+        grid-template-rows: auto auto minmax(0, 1fr);
       }
 
-      header,
-      .footer-bar {
+      header {
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -701,40 +700,12 @@
         text-align: center;
       }
 
-      .nav {
-        display: flex;
-        gap: 0.45rem;
-      }
-
-      button.icon {
-        width: 2.2rem;
-        height: 2.2rem;
-        border: 1px solid #2c3a5c;
-        border-radius: 999px;
-        background: #151c31;
-        color: var(--text);
-        cursor: pointer;
-      }
-
-      .notes {
-        display: none;
-        margin: 0 1.4rem;
-        padding: 0.7rem 0.9rem;
-        border: 1px solid #2c3a5c;
-        border-radius: 12px;
-        background: #151c31;
-        color: var(--muted);
-      }
-
-      body.show-notes .notes {
-        display: block;
-      }
     </style>
   </head>
   <body>
     <div class="deck">
       <header>
-        <strong>Recriando o zustand</strong>
+        <strong>Gerenciamento de estado no react</strong>
         <span class="count"></span>
       </header>
       <div class="progress"><span></span></div>
@@ -1372,20 +1343,9 @@
           </div>
         </section>
       </main>
-      <footer>
-        <p class="notes"></p>
-        <div class="footer-bar">
-          <span>← → · N notas</span>
-          <div class="nav">
-            <button class="icon" type="button" data-dir="-1" aria-label="Slide anterior">←</button>
-            <button class="icon" type="button" data-dir="1" aria-label="Próximo slide">→</button>
-          </div>
-        </div>
-      </footer>
     </div>
     <script>
       const slides = [...document.querySelectorAll(".slide")];
-      const notes = document.querySelector(".notes");
       const count = document.querySelector(".count");
       const bar = document.querySelector(".progress span");
       const initialSlide = Number(new URLSearchParams(location.search).get("slide"));
@@ -1478,7 +1438,6 @@
         });
         count.textContent = `${index + 1} / ${slides.length}`;
         bar.style.width = `${((index + 1) / slides.length) * 100}%`;
-        notes.textContent = slides[index].dataset.note || "";
         requestAnimationFrame(drawSubscriptions);
       }
 
@@ -1498,13 +1457,6 @@
         }
         if (event.key === "Home") go(0);
         if (event.key === "End") go(slides.length - 1);
-        if (event.key === "n" || event.key === "N") {
-          document.body.classList.toggle("show-notes");
-        }
-      });
-
-      document.querySelectorAll("[data-dir]").forEach((button) => {
-        button.addEventListener("click", () => go(index + Number(button.dataset.dir)));
       });
 
       window.addEventListener("resize", drawSubscriptions);
