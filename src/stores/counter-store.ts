@@ -20,7 +20,6 @@ export const useCounterStore = create<CounterState>((set) => {
     },
     toggleEnabled() {
       set((previousState) => ({
-        ...previousState,
         enabled: !previousState.enabled,
       }));
     },
