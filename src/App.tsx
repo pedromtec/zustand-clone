@@ -2,6 +2,7 @@ import { CounterActions } from './components/CounterActions';
 import { CounterDisplay } from './components/CounterDisplay';
 import { EnableCounter } from './components/EnableCounter';
 import './App.css';
+import './lib/zustand/vanilla';
 
 export function App() {
   return (
