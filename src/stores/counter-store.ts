@@ -30,3 +30,7 @@ export const counterStore = createStore<CounterStore>((set, get) => ({
     set((previousState) => ({ enabled: !previousState.enabled }));
   },
 }));
+
+counterStore.subscribe(() => {
+  console.log('Listener 2:', counterStore.getState().enabled);
+});

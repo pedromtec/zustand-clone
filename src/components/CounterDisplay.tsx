@@ -1,3 +1,8 @@
+import { useStore } from '../lib/zustand/react';
+import { counterStore } from '../stores/counter-store';
+
 export function CounterDisplay() {
-  return <span>Counter: 0</span>;
+  const { count } = useStore(counterStore);
+
+  return <span>Counter: {count}</span>;
 }
