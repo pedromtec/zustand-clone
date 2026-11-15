@@ -30,25 +30,3 @@ export const createStore = <State extends Record<string, unknown>>(
     setState,
   };
 };
-
-type CountStore = {
-  count: number;
-  enabled: boolean;
-  increment: () => void;
-};
-
-const countStore = createStore<CountStore>((set, get) => ({
-  count: 0,
-  enabled: true,
-  increment: () => {
-    const { enabled } = get();
-    if (!enabled) {
-      return;
-    }
-    set((previousState) => ({ count: previousState.count + 1 }));
-  },
-}));
-
-countStore.getState().increment();
-
-console.log(countStore.getState());
