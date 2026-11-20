@@ -1,16 +1,8 @@
-type SetState<State> = (
-  partial: Partial<State> | ((previous: State) => Partial<State>),
-) => void;
-
-type GetState<State> = () => State;
-
-type CreateState<State> = (set: SetState<State>, get: GetState<State>) => State;
-
-type Listener = () => void;
+import type { CreateState, GetState, Listener, SetState, Store } from './types';
 
 export const createStore = <State extends Record<string, unknown>>(
   createState: CreateState<State>,
-) => {
+): Store<State> => {
   let state: State;
   const listeners = new Set<Listener>();
 
